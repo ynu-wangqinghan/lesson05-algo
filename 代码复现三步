@@ -1,0 +1,106 @@
+import timeit
+import random
+
+# ===================== Step1：合并排序 merge_sort（分解-解决-合并） =====================
+def merge_sort(nums):
+    """
+    合并排序，严格按照【分解 → 解决 → 合并】结构
+    :param nums: 待排序列表
+    :return: 升序有序列表
+    """
+    # ========== 【分解】代码段：递归对半拆分数组 ==========
+    if len(nums) <= 1:
+        return nums
+    mid = len(nums) // 2
+    left = merge_sort(nums[:mid])   # 左半部分递归分解排序
+    right = merge_sort(nums[mid:])  # 右半部分递归分解排序
+
+    # ========== 【合并】代码段：合并两个有序子数组 ==========
+    res = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] < right[j]:
+            res.append(left[i])
+            i += 1
+        else:
+            res.append(right[j])
+            j += 1
+    res.extend(left[i:])
+    res.extend(right[j:])
+    return res
+
+def main_step1():
+    arr = [8, 3, 5, 1, 9, 2]
+    sorted_arr = merge_sort(arr)
+    print("==== Step1 合并排序 ====")
+    print(f"原始数组：{arr}")
+    print(f"排序结果：{sorted_arr}")
+
+
+# ===================== Step2：二分查找 binary_search =====================
+def binary_search(rates, target):
+    """
+    二分查找：仅在有序数组下保证正确
+    :param rates: 有序数组
+    :param target: 查找目标
+    :return: (下标, 查找次数)
+    """
+    left = 0
+    right = len(rates) - 1
+    search_count = 0
+    while left <= right:
+        search_count += 1
+        mid = (left + right) // 2
+        if rates[mid] == target:
+            return mid, search_count
+        elif rates[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1, search_count
+
+def main_step2():
+    print("\n==== Step2 二分查找 ====")
+    # 构造 1024 档模拟利率表：0.00% ~ 10.23%，步长0.01%
+    rate_list = [round(i * 0.01, 2) for i in range(1024)]
+    target_rate = 3.75
+    pos, cnt = binary_search(rate_list, target_rate)
+    print(f"查找目标：{target_rate}%，档位下标：{pos}，查找次数：{cnt}")
+
+    # ✦ 故意实验：传入无序数组，验证结果不可预测
+    unsort_test = [5, 1, 8, 2, 7]
+    pos2, cnt2 = binary_search(unsort_test, 2)
+    print(f"【无序数组实验】查找2，返回下标{pos2}，次数{cnt2}（结果不可信）")
+
+
+# ===================== Step3：性能实验 benchmark（冒泡 VS 归并计时对比） =====================
+def bubble_sort(arr):
+    """手写冒泡排序，用于性能对比"""
+    a = arr.copy()
+    n = len(a)
+    for i in range(n):
+        for j in range(n - i - 1):
+            if a[j] > a[j + 1]:
+                a[j], a[j + 1] = a[j + 1], a[j]
+    return a
+
+def make_array(n):
+    """生成n个随机整数数组"""
+    return [random.randint(0, 10000) for _ in range(n)]
+
+def main_step3():
+    print("\n==== Step3 性能对比实验 ====")
+    print(f"{'规模n':<6}{'冒泡耗时(s)':<14}{'归并耗时(s)':<14}{'加速倍数':<8}")
+    for n in [1000, 2000, 4000, 8000]:
+        arr = make_array(n)
+        # arr[:] 传副本，避免原地排序污染数据；跑3次取平均
+        t_bubble = timeit.timeit(lambda: bubble_sort(arr[:]), number=3) / 3
+        t_merge = timeit.timeit(lambda: merge_sort(arr[:]), number=3) / 3
+        multiple = t_bubble / t_merge
+        print(f"{n:<6}{t_bubble:<14.4f}{t_merge:<14.4f}{multiple:<8.1f}")
+
+
+if __name__ == "__main__":
+    main_step1()
+    main_step2()
+    main_step3()
